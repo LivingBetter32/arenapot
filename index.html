@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArenaPot — Tournament buy-ins in XLM, split for the pot</title>
+  <link rel="stylesheet" href="style.css?v=12">
+</head>
+<body>
+
+  <!-- ======================= NAV ======================= -->
+  <header class="nav">
+    <a class="brand" href="#top">
+      <span class="brand-mark">◆</span> Arena<span class="brand-accent">Pot</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#tournaments">Tournaments</a>
+      <a href="#podium">Podium</a>
+      <a href="#impact">Scoreboard</a>
+      <a href="#activity">Activity</a>
+      <a href="#players">Players</a>
+    </nav>
+    <span class="badge testnet-badge">TESTNET</span>
+  </header>
+
+  <!-- ======================= ARENA BANNER (HERO) ======================= -->
+  <section class="hero arena-hero" id="top">
+    <div class="spotlight s1"></div>
+    <div class="spotlight s2"></div>
+
+    <div class="hero-split">
+      <div class="hero-copy">
+        <div class="hero-chips">
+          <span class="chip chip-gold">SEASON 1 · TESTNET</span>
+          <span class="chip">POWERED BY PAIFLOW · RECEIVE → SPLIT</span>
+        </div>
+        <h1>Enter the arena.<br><span class="hero-accent">90% to the pot. 10% for good.</span></h1>
+        <p class="hero-sub">
+          Players enter tournaments by paying a buy-in in testnet XLM through a deployed
+          smart-contract flow. Every buy-in splits itself — no trust, no manual math, proof on-chain.
+        </p>
+        <div class="hero-cta">
+          <a class="btn-sign hero-cta-btn" href="#tournaments">Browse tournaments</a>
+          <a class="btn-cancel hero-cta-btn" href="#podium">Biggest pots</a>
+        </div>
+        <div class="ap-pot-chip" aria-hidden="true">
+          <span class="ap-pot-chip-label">Pot</span>
+          <span class="ap-pot-chip-value">36.0 XLM</span>
+        </div>
+      </div>
+
+      <div class="hero-trophy" aria-hidden="true">
+        <div class="trophy-shine"></div>
+        <svg class="trophy-svg" viewBox="0 0 120 140" fill="none">
+          <defs>
+            <linearGradient id="trophyGold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ffd766"/>
+              <stop offset=".5" stop-color="#f0b429"/>
+              <stop offset="1" stop-color="#b8860b"/>
+            </linearGradient>
+          </defs>
+          <!-- handles -->
+          <path d="M28 22 H14 a14 14 0 0 0 14 18" stroke="url(#trophyGold)" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <path d="M92 22 h14 a14 14 0 0 1 -14 18" stroke="url(#trophyGold)" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <!-- cup -->
+          <path d="M32 12 h56 v26 a28 28 0 0 1 -56 0 z" fill="url(#trophyGold)"/>
+          <!-- rim -->
+          <rect x="28" y="8" width="64" height="9" rx="3" fill="#ffd766"/>
+          <!-- stem -->
+          <rect x="55" y="63" width="10" height="16" fill="url(#trophyGold)"/>
+          <!-- base -->
+          <path d="M40 82 h40 l6 12 h-52 z" fill="url(#trophyGold)"/>
+          <rect x="32" y="96" width="56" height="12" rx="3" fill="#b8860b"/>
+          <!-- star -->
+          <path d="M60 24 l3.4 7 7.6 1 -5.5 5.2 1.3 7.5 -6.8 -3.7 -6.8 3.7 1.3 -7.5 -5.5 -5.2 7.6 -1 z" fill="#14181d" opacity=".8"/>
+        </svg>
+        <!-- mini bracket board: 4 slots -> 2 semis -> final -> pot -->
+        <svg class="ap-bracket" viewBox="0 0 280 140" fill="none" aria-hidden="true">
+          <g stroke="#f0b429" stroke-width="1.5">
+            <path d="M58 18H76M58 50H76M76 18V50M76 34H108"/>
+            <path d="M58 92H76M58 124H76M76 92V124M76 108H108"/>
+            <path d="M164 34H180M164 108H180M180 34V108M180 71H196"/>
+            <path d="M244 71H254" stroke="#ffd766"/>
+          </g>
+          <g fill="rgba(240,180,41,.10)" stroke="#f0b429" stroke-width="1.2">
+            <rect x="2" y="8" width="56" height="20"/>
+            <rect x="2" y="40" width="56" height="20"/>
+            <rect x="2" y="82" width="56" height="20"/>
+            <rect x="2" y="114" width="56" height="20"/>
+          </g>
+          <g fill="rgba(240,180,41,.16)" stroke="#ffd766" stroke-width="1.2">
+            <rect x="108" y="24" width="56" height="20"/>
+            <rect x="108" y="98" width="56" height="20"/>
+          </g>
+          <rect x="196" y="61" width="48" height="20" fill="#f0b429" stroke="#ffd766" stroke-width="1.2"/>
+          <!-- pot icon -->
+          <path d="M254 62h20l-3.4 13.2a6.6 6.6 0 0 1-13.2 0z" fill="#f0b429" stroke="#ffd766" stroke-width="1.2"/>
+          <rect x="252" y="59" width="24" height="4" fill="#ffd766"/>
+          <text x="30" y="21.5" text-anchor="middle">P1</text>
+          <text x="30" y="53.5" text-anchor="middle">P2</text>
+          <text x="30" y="95.5" text-anchor="middle">P3</text>
+          <text x="30" y="127.5" text-anchor="middle">P4</text>
+          <text x="136" y="37.5" text-anchor="middle">SF1</text>
+          <text x="136" y="111.5" text-anchor="middle">SF2</text>
+          <text x="220" y="74.5" text-anchor="middle" fill="#14181d" font-weight="800">FINAL</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-card">
+        <span class="stat-label">Prize pool (paid entries)</span>
+        <span class="stat-value" id="stat-earned">—</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Entries pending</span>
+        <span class="stat-value" id="stat-pending">—</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active tournaments</span>
+        <span class="stat-value" id="stat-overdue">—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= PATH TO VICTORY ======================= -->
+  <section class="section flow-section">
+    <h2 class="section-title">Path to <em>victory</em></h2>
+    <div class="path-chips">
+      <div class="path-chip">
+        <span class="path-num">01</span>
+        <span class="path-chip-title">Player enters</span>
+        <span class="path-chip-sub">Freighter signs the exact prepared XDR</span>
+      </div>
+      <div class="path-arrow">→</div>
+      <div class="path-chip path-chip-contract">
+        <span class="path-num">02</span>
+        <span class="path-chip-title">Paiflow contract</span>
+        <span class="path-chip-sub">Receives XLM · verifies original hash</span>
+      </div>
+      <div class="path-arrow">→</div>
+      <div class="path-chip path-chip-gold">
+        <span class="path-num">03</span>
+        <span class="path-chip-title">90% Arena vault</span>
+        <span class="path-chip-sub">The prize pot custodian</span>
+      </div>
+      <div class="path-chip path-chip-emerald">
+        <span class="path-num">+</span>
+        <span class="path-chip-title">10% Community fund</span>
+        <span class="path-chip-sub">Every buy-in does good</span>
+      </div>
+    </div>
+    <p class="section-note">An entry is only marked <b>paid</b> after both payouts are verified on-chain.</p>
+  </section>
+
+  <!-- ======================= WORKSPACE ======================= -->
+  <main class="workspace">
+
+    <!-- Tournaments -->
+    <section class="section" id="tournaments">
+      <h2 class="section-title">Tournaments</h2>
+      <p class="section-note">Create a bracket, set the buy-in, and let players enter with one click.</p>
+
+      <form id="tournament-form" class="card form-card create-card">
+        <h3 class="card-title">New tournament</h3>
+        <div class="create-grid">
+          <label>Title
+            <input type="text" id="tournament-title" placeholder="e.g. Friday Frenzy" required>
+          </label>
+          <label>Buy-in (XLM)
+            <input type="number" id="tournament-buyin" placeholder="10.00" min="0.0000001" step="0.01" required>
+          </label>
+        </div>
+        <button type="submit" class="btn-primary">Create tournament</button>
+      </form>
+
+      <div id="tournaments-grid" class="tournaments-grid"></div>
+    </section>
+
+    <!-- Podium -->
+    <section class="section" id="podium">
+      <h2 class="section-title">Biggest pots</h2>
+      <p class="section-note">Top 3 tournaments by prize pot so far · 90% of every paid buy-in</p>
+      <div id="podium-body" class="podium"></div>
+    </section>
+
+    <!-- Impact / scoreboard -->
+    <section class="section" id="impact">
+      <h2 class="section-title">Arena scoreboard</h2>
+      <p class="section-note">Cumulative payouts received on testnet · updates every 10s · <span id="impact-updated"></span></p>
+
+      <div class="impact-grid scoreboard">
+        <div class="card impact-card score-panel">
+          <div class="impact-head">
+            <span class="impact-who">Arena vault <span class="impact-share">90%</span></span>
+            <span class="impact-addr mono" id="impact-vault-addr"></span>
+          </div>
+          <div class="impact-total"><span id="impact-vault-total">—</span><span class="impact-cur">XLM</span></div>
+          <div class="progress"><div class="progress-fill freelancer" id="impact-vault-bar"></div></div>
+          <div class="impact-milestone" id="impact-vault-milestone"></div>
+        </div>
+
+        <div class="card impact-card score-panel">
+          <div class="impact-head">
+            <span class="impact-who">Community fund <span class="impact-share">10%</span></span>
+            <span class="impact-addr mono" id="impact-community-addr"></span>
+          </div>
+          <div class="impact-total"><span id="impact-community-total">—</span><span class="impact-cur">XLM</span></div>
+          <div class="progress"><div class="progress-fill community" id="impact-community-bar"></div></div>
+          <div class="impact-milestone" id="impact-community-milestone"></div>
+        </div>
+      </div>
+
+      <div class="card combined-card">
+        <span class="combined-label">Total flowing through the split</span>
+        <span class="combined-value"><span id="impact-combined">—</span> XLM</span>
+      </div>
+    </section>
+
+    <!-- Activity -->
+    <section class="section" id="activity">
+      <h2 class="section-title">Match tickets</h2>
+      <p class="section-note">Every paid entry, stamped on testnet · updates every 10s</p>
+      <div class="card feed-card">
+        <div id="activity-feed"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
+      </div>
+    </section>
+
+    <!-- Players -->
+    <section class="section" id="players">
+      <h2 class="section-title">Players</h2>
+      <div class="panel-grid panel-grid-reverse">
+        <div class="card table-card">
+          <table id="players-table">
+            <thead>
+              <tr><th>Name</th><th>Gamertag</th><th>Entries</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <form id="player-form" class="card form-card">
+          <h3 class="card-title">New player</h3>
+          <label>Name
+            <input type="text" id="player-name" placeholder="e.g. Ada Lovelace" required>
+          </label>
+          <label>Gamertag
+            <input type="text" id="player-tag" placeholder="e.g. ada_wrecks">
+          </label>
+          <button type="submit" class="btn-primary">Add player</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>ArenaPot — Paiflow Receive → Split demo. Testnet XLM has no real value.</p>
+    <p class="mono">Never paste secret keys into apps, repos or prompts.</p>
+  </footer>
+
+  <!-- ======================= PAYMENT MODAL ======================= -->
+  <div id="pay-modal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Match lobby <span class="badge testnet-badge">TESTNET</span></h3>
+        <button type="button" id="pay-modal-close" class="btn-close">✕</button>
+      </div>
+      <div id="pay-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ======================= TOURNAMENT DETAIL MODAL ======================= -->
+  <div id="view-modal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="view-modal-title">Tournament</h3>
+        <button type="button" id="view-modal-close" class="btn-close">✕</button>
+      </div>
+      <div id="view-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Snapshot any extension-injected (legacy) Freighter API before the vendored SDK overwrites window.freighterApi -->
+  <script>window.__nativeFreighter = window.freighterApi || null;</script>
+  <!-- Freighter wallet bridge (vendored from @stellar/freighter-api) -->
+  <script src="vendor/freighter-api.min.js"></script>
+  <!-- Resilient connector: normalizes v5/v6/legacy bridge responses -->
+  <script src="freighter-connector.js"></script>
+  <script src="app.js?v=12"></script>
+</body>
+</html>
