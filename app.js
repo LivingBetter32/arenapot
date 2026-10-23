@@ -69,6 +69,22 @@ function tournamentEntries(tournamentId) {
   return entries.filter(e => e.tournamentId === tournamentId).reverse();
 }
 
+// Older entries are treated as one entry. Multi-entry purchases store entryCount.
+function entryUnits(entry) {
+  const n = Number(entry && entry.entryCount);
+  return Number.isSafeInteger(n) && n > 0 ? n : 1;
+}
+
+function paidEntryUnits(tournamentId) {
+  return entries.filter(e => e.tournamentId === tournamentId && e.paid)
+    .reduce((sum, e) => sum + entryUnits(e), 0);
+}
+
+function formatDeadline(value) {
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? 'Invalid date' : d.toLocaleString();
+}
+
 // Pot so far = sum of PAID buy-ins × 90% (the vault share).
 function tournamentPot(tournamentId) {
   return entries
@@ -148,14 +164,36 @@ tournamentForm.addEventListener('submit', e => {
   e.preventDefault();
 
   const title = document.getElementById('tournament-title').value.trim();
-  const buyIn = parseFloat(document.getElementById('tournament-buyin').value);
-  if (!title || !(buyIn > 0)) return;
+  const buyInInput = document.getElementById('tournament-buyin').value.trim();
+  const buyIn = Number(buyInInput);
+  const deadlineInput = document.getElementById('tournament-deadline').value;
+  const minEntriesInput = document.getElementById('tournament-min-entries').value.trim();
+  const minEntries = Number(minEntriesInput);
+  const deadlineDate = deadlineInput ? new Date(deadlineInput) : null;
+
+  // ArenaPot tournament buy-ins are whole XLM amounts (for example 10 or 20).
+  // Keep the browser UI and stored amount aligned with the payment flow's 2-decimal display.
+  if (!title) return;
+  if (!buyInInput || !Number.isSafeInteger(buyIn) || buyIn < 1) {
+    alert('Enter a whole-number buy-in of at least 1 XLM, such as 10 or 20.');
+    return;
+  }
+  if (!deadlineInput || !deadlineDate || Number.isNaN(deadlineDate.getTime()) || deadlineDate.getTime() <= Date.now()) {
+    alert('Choose a deadline in the future. The tournament can auto-draw only after that deadline.');
+    return;
+  }
+  if (!Number.isSafeInteger(minEntries) || minEntries < 1 || minEntries > 10000) {
+    alert('Minimum entries must be a whole number between 1 and 10,000.');
+    return;
+  }
 
   const tournament = {
     id: Date.now(),
     number: nextTournamentNumber++, // permanent — never reused, even after deletes
     title,
     buyIn,
+    deadlineAt: deadlineDate.toISOString(),
+    minEntries,
     createdAt: todayStr()
   };
 
@@ -189,13 +227,18 @@ function renderTournaments() {
   // Show newest first.
   grid.innerHTML = [...tournaments].reverse().map(t => {
     const list = entries.filter(e => e.tournamentId === t.id);
-    const paidCount = list.filter(e => e.paid).length;
+    const paidCount = list.filter(e => e.paid).reduce((sum, e) => sum + entryUnits(e), 0);
+    const minimum = Number(t.minEntries) || 1;
+    const deadlinePassed = !!t.deadlineAt && Date.now() >= new Date(t.deadlineAt).getTime();
+    const waitingForMinimum = deadlinePassed && paidCount < minimum && !t.winnerEntryId;
     const pot = tournamentPot(t.id);
     // Pot progress: position inside the current 25 XLM milestone bucket.
     const pct = pot <= 0 ? 0 : Math.min(100, Math.round(((pot % 25) / 25) * 100));
     const paying = list.some(e => getEntryStatus(e) === 'paying');
-    const statusClass = paying ? 'paying' : 'pending';
-    const statusLabel = paying ? 'Paying' : 'Open';
+    const winnerEntry = t.winnerEntryId ? entries.find(e => e.id === t.winnerEntryId && e.tournamentId === t.id) : null;
+    const winnerPlayer = winnerEntry ? findPlayer(winnerEntry.playerId) : null;
+    const statusClass = t.winnerEntryId ? 'completed' : (waitingForMinimum ? 'waiting' : (paying ? 'paying' : 'pending'));
+    const statusLabel = t.winnerEntryId ? 'Completed' : (waitingForMinimum ? 'Waiting for entries' : (paying ? 'Paying' : 'Open'));
     return `
     <div class="t-card">
       <div class="t-card-top">
@@ -205,7 +248,10 @@ function renderTournaments() {
       <h3 class="t-card-title">${t.title}</h3>
       <div class="t-card-buyin">${ICON.coin}<span class="t-card-buyin-value">${xlm(t.buyIn)}</span><span class="t-card-buyin-cur">XLM buy-in</span></div>
       <div class="t-card-potbar"><div class="t-card-potfill" style="width:${pct}%"></div></div>
-      <div class="t-card-potline">${ICON.trophy}<span><b>${xlm(pot)} XLM</b> pot · ${paidCount}/${list.length} paid</span></div>
+      <div class="t-card-potline">${ICON.trophy}<span><b>${xlm(pot)} XLM</b> pot · ${paidCount}/${minimum} entries required</span></div>
+      ${t.deadlineAt ? `<div class="t-card-deadline">Deadline: ${formatDeadline(t.deadlineAt)}</div>` : ''}
+      ${waitingForMinimum ? `<div class="t-card-deadline waiting-note">Deadline passed; stays open until ${minimum} paid entries are reached.</div>` : ''}
+      ${winnerEntry ? `<div class="t-card-winner">${ICON.trophy}<span>Winner: <b>${winnerPlayer ? winnerPlayer.name : "Entry #" + winnerEntry.number}</b></span></div>` : ""}
       <div class="t-card-actions">
         <button class="btn-pay-xlm" onclick="openEnterModal(${t.id})">Enter</button>
         <button class="btn-view" onclick="viewTournament(${t.id})">View</button>
@@ -249,6 +295,10 @@ function renderPodium() {
 function openEnterModal(tournamentId) {
   const t = findTournament(tournamentId);
   if (!t) return;
+  if (t.winnerEntryId) {
+    alert('This tournament is completed and already has a winner.');
+    return;
+  }
 
   if (players.length === 0) {
     alert('Add a player first (Players section below), then enter them into a tournament.');
@@ -270,8 +320,12 @@ function openEnterModal(tournamentId) {
           ${players.map(p => `<option value="${p.id}">${p.name}${p.tag ? ` (@${p.tag})` : ''}</option>`).join('')}
         </select>
       </label>
-      <div class="lobby-split-row vault">${ICON.trophy}<span>Arena vault (90%)</span><b>${xlm(t.buyIn * 0.9)} XLM</b></div>
-      <div class="lobby-split-row community"><span>Community fund (10%)</span><b>${xlm(t.buyIn * 0.1)} XLM</b></div>
+      <label class="lobby-player-label">Number of entries (each entry costs ${xlm(t.buyIn)} XLM)
+        <input type="number" id="enter-quantity" class="lobby-select" min="1" max="100" step="1" value="1" required>
+      </label>
+      <div class="lobby-split-row"><span>Total payment</span><b id="enter-total">${xlm(t.buyIn)} XLM</b></div>
+      <div class="lobby-split-row vault">${ICON.trophy}<span>Arena vault (90%)</span><b id="enter-vault">${xlm(t.buyIn * 0.9)} XLM</b></div>
+      <div class="lobby-split-row community"><span>Community fund (10%)</span><b id="enter-community">${xlm(t.buyIn * 0.1)} XLM</b></div>
     </div>
     <p class="pay-note">This creates the entry record, then opens the payment review. The entry is only marked <b>paid</b> after both payouts are verified on-chain.</p>
     <div class="modal-actions">
@@ -280,17 +334,32 @@ function openEnterModal(tournamentId) {
     </div>
     <div id="pay-status-slot"></div>`;
 
+  const quantityInput = document.getElementById('enter-quantity');
+  const updateEntryTotal = () => {
+    const q = Number(quantityInput.value);
+    const valid = Number.isSafeInteger(q) && q >= 1 && q <= 100;
+    document.getElementById('btn-enter-continue').disabled = !valid;
+    const quantity = valid ? q : 0;
+    document.getElementById('enter-total').textContent = `${xlm(t.buyIn * quantity)} XLM`;
+    document.getElementById('enter-vault').textContent = `${xlm(t.buyIn * quantity * 0.9)} XLM`;
+    document.getElementById('enter-community').textContent = `${xlm(t.buyIn * quantity * 0.1)} XLM`;
+  };
+  quantityInput.addEventListener('input', updateEntryTotal);
+  updateEntryTotal();
+
   document.getElementById('btn-enter-continue').addEventListener('click', () => {
     const playerId = parseInt(document.getElementById('enter-player').value);
     const player = findPlayer(playerId);
-    if (!player) return;
+    const quantity = Number(quantityInput.value);
+    if (!player || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100) return;
 
     const entry = {
       id: Date.now(),
       number: nextEntryNumber++, // permanent — never reused
       tournamentId: t.id,
       playerId: player.id,
-      buyIn: t.buyIn,
+      buyIn: t.buyIn * quantity,
+      entryCount: quantity,
       paid: false,
       createdAt: todayStr()
     };
@@ -302,6 +371,12 @@ function openEnterModal(tournamentId) {
 }
 
 function deleteEntry(number) {
+  const existing = findEntryByNumber(number);
+  const tournament = existing ? findTournament(existing.tournamentId) : null;
+  if (tournament && tournament.winnerEntryId) {
+    alert('Entries cannot be changed after a tournament winner has been declared.');
+    return;
+  }
   if (!confirm('Delete this entry?')) return;
   entries = entries.filter(e => e.number !== Number(number));
   saveData();
@@ -310,6 +385,11 @@ function deleteEntry(number) {
 
 function markPaid(number) {
   const entry = findEntryByNumber(number);
+  const tournament = entry ? findTournament(entry.tournamentId) : null;
+  if (tournament && tournament.winnerEntryId) {
+    alert('Payments cannot be manually changed after a tournament winner has been declared.');
+    return;
+  }
   if (entry) {
     const wasPaid = entry.paid;
     entry.paid = true;
@@ -358,6 +438,14 @@ function viewTournament(id) {
   if (!t) return;
   const list = tournamentEntries(id);
   const pot = tournamentPot(id);
+  const winnerEntry = t.winnerEntryId
+    ? entries.find(e => e.id === t.winnerEntryId && e.tournamentId === t.id)
+    : null;
+  const winnerPlayer = winnerEntry ? findPlayer(winnerEntry.playerId) : null;
+  const eligible = list.filter(e => e.paid && findPlayer(e.playerId));
+  const paidUnits = list.filter(e => e.paid).reduce((sum, e) => sum + entryUnits(e), 0);
+  const minimumEntries = Number(t.minEntries) || 1;
+  const deadlinePassed = !!t.deadlineAt && Date.now() >= new Date(t.deadlineAt).getTime();
 
   document.getElementById('view-modal-title').textContent = `Bracket #${t.number} — ${t.title}`;
   viewModalBody.innerHTML = `
@@ -365,8 +453,31 @@ function viewTournament(id) {
       <div class="row"><span>Title</span><span>${t.title}</span></div>
       <div class="row"><span>Buy-in</span><span>${xlm(t.buyIn)} XLM</span></div>
       <div class="row"><span>Created</span><span>${t.createdAt}</span></div>
+      <div class="row"><span>Deadline</span><span>${t.deadlineAt ? formatDeadline(t.deadlineAt) : 'No deadline (legacy tournament)'}</span></div>
+      <div class="row"><span>Paid entries</span><span>${paidUnits} / ${minimumEntries} required</span></div>
       <div class="row total"><span>Prize pot so far (90% of paid buy-ins)</span><span>${xlm(pot)} XLM</span></div>
     </div>
+    ${winnerEntry ? `
+      <section class="winner-panel" aria-live="polite">
+        <div class="winner-panel-icon">${ICON.trophy}</div>
+        <div>
+          <div class="winner-kicker">TOURNAMENT WINNER</div>
+          <div class="winner-name">${winnerPlayer ? winnerPlayer.name : `Entry #${winnerEntry.number}`}</div>
+          <div class="winner-meta">Entry #${winnerEntry.number}${winnerPlayer && winnerPlayer.tag ? ` · @${winnerPlayer.tag}` : ''}${t.completedAt ? ` · Declared ${t.completedAt}` : ''}</div>
+          <div class="winner-meta">Winner declared in ArenaPot. Prize payout has not been sent or verified.</div>
+        </div>
+      </section>
+    ` : `
+      <section class="declare-winner-panel">
+        <h4>Randomly draw tournament winner</h4>
+        <p>Winner selection is weighted by the number of paid entries: every paid entry gives its owner one chance. The system draws automatically after the deadline and minimum entry target are both satisfied.</p>
+        ${t.deadlineAt && (!deadlinePassed || paidUnits < minimumEntries)
+          ? `<div class="winner-random-count">${paidUnits} / ${minimumEntries} paid entries · ${deadlinePassed ? 'deadline passed; waiting for minimum entries' : 'waiting for deadline'}</div>`
+          : (!t.deadlineAt ? `<p class="winner-empty">This older tournament has no deadline configured. You can still run a manual random draw.</p>` : `<div class="winner-random-count">Automatic draw conditions met; checking winner status.</div>`)}
+        ${!t.deadlineAt && eligible.length ? `<button type="button" class="btn-declare-winner" onclick="pickRandomTournamentWinner(${t.id})">🎲 Pick Random Winner</button>` : ''}
+        ${!eligible.length ? `<p class="winner-empty">No eligible paid entries yet.</p>` : ''}
+      </section>
+    `}
     <table class="detail-table">
       <thead><tr><th>Entry</th><th>Player</th><th>Buy-in</th><th>Status</th><th></th></tr></thead>
       <tbody>
@@ -375,25 +486,110 @@ function viewTournament(id) {
           : list.map(e => {
               const player = findPlayer(e.playerId);
               const status = getEntryStatus(e);
+              const isWinner = winnerEntry && winnerEntry.id === e.id;
               return `
-              <tr>
-                <td>#${e.number}</td>
-                <td>${player ? player.name : '(deleted player)'}</td>
-                <td>${xlm(e.buyIn)} XLM</td>
-                <td><span class="badge ${status}">${status}</span></td>
+              <tr${isWinner ? ' class="winner-entry-row"' : ''}>
+                <td>#${e.number}${isWinner ? ' 🏆' : ''}</td>
+                <td>${player ? player.name : '(deleted player)'}<div class="entry-units-note">${entryUnits(e)} ${entryUnits(e) === 1 ? 'entry' : 'entries'}</div></td>
+                <td>${xlm(e.buyIn)} XLM total</td>
+                <td><span class="badge ${status}">${status}</span>${isWinner ? ' <span class="badge completed">Winner</span>' : ''}</td>
                 <td>
-                  ${!e.paid ? `<button class="btn-pay-xlm" onclick="closeViewModal(); openPayModal(${e.number})">Pay with XLM</button>` : ''}
-                  ${!e.paid && getPaymentRecord(e.number) ? `<button class="btn-check-pay" onclick="closeViewModal(); checkPayment(${e.number}, true)">Check payment</button>` : ''}
-                  ${!e.paid ? `<button class="btn-pay" onclick="markPaid(${e.number})">Mark paid</button>` : ''}
-                  <button class="btn-delete" onclick="deleteEntry(${e.number})">Delete</button>
+                  ${!t.winnerEntryId && !e.paid ? `<button class="btn-pay-xlm" onclick="closeViewModal(); openPayModal(${e.number})">Pay with XLM</button>` : ''}
+                  ${!t.winnerEntryId && !e.paid && getPaymentRecord(e.number) ? `<button class="btn-check-pay" onclick="closeViewModal(); checkPayment(${e.number}, true)">Check payment</button>` : ''}
+                  ${!t.winnerEntryId && !e.paid ? `<button class="btn-pay" onclick="markPaid(${e.number})">Mark paid</button>` : ''}
+                  ${!t.winnerEntryId ? `<button class="btn-delete" onclick="deleteEntry(${e.number})">Delete</button>` : ''}
                 </td>
               </tr>`;
             }).join('')}
       </tbody>
     </table>
-    <p class="pay-note">Every paid buy-in sends ${xlm(t.buyIn)} XLM through the split: <b>${xlm(t.buyIn * 0.9)} XLM to the Arena vault</b> (the prize pot) and <b>${xlm(t.buyIn * 0.1)} XLM to the community fund</b>.</p>
+    <p class="pay-note">Each entry costs ${xlm(t.buyIn)} XLM. Multi-entry purchases are paid together and split 90% to the Arena vault and 10% to the community fund. Automatic selection is a random draw, not a result from an external game.</p>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeViewModal()">Close</button></div>`;
   viewModal.hidden = false;
+}
+
+// Randomly draw one winner from eligible paid entries. Web Crypto is used when
+// available. Results are still browser-side/localStorage and are not independently auditable.
+function secureRandomIndex(max) {
+  if (max <= 1) return 0;
+  if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+    const range = 0x100000000;
+    const limit = range - (range % max);
+    const value = new Uint32Array(1);
+    let n;
+    do { window.crypto.getRandomValues(value); n = value[0]; } while (n >= limit);
+    return n % max;
+  }
+  return Math.floor(Math.random() * max);
+}
+
+function chooseWeightedEntry(eligible) {
+  const total = eligible.reduce((sum, e) => sum + entryUnits(e), 0);
+  if (!total) return null;
+  let ticket = secureRandomIndex(total);
+  for (const e of eligible) {
+    ticket -= entryUnits(e);
+    if (ticket < 0) return e;
+  }
+  return eligible[eligible.length - 1] || null;
+}
+
+function pickRandomTournamentWinner(tournamentId) {
+  const t = findTournament(tournamentId);
+  if (!t) return;
+  if (t.winnerEntryId) {
+    alert('This tournament already has a winner.');
+    return;
+  }
+
+  const eligible = tournamentEntries(tournamentId).filter(e =>
+    e.paid === true && !!findPlayer(e.playerId)
+  );
+  if (!eligible.length) {
+    alert('There are no eligible paid entries to draw from.');
+    return;
+  }
+
+  const entry = chooseWeightedEntry(eligible);
+  const player = findPlayer(entry.playerId);
+  const playerName = player ? player.name : `Entry #${entry.number}`;
+  if (!confirm(`Random draw selected ${playerName} (Entry #${entry.number}) from ${eligible.reduce((sum, e) => sum + entryUnits(e), 0)} weighted paid entries. Confirm this winner? This demo does not send the prize payout.`)) {
+    return;
+  }
+
+  t.winnerEntryId = entry.id;
+  t.completedAt = new Date().toISOString();
+  t.winnerSelectionMethod = 'manual-random-weighted';
+  saveData();
+  renderAll();
+  viewTournament(tournamentId);
+  burstConfetti();
+}
+
+// Automatic winner selection: requires both the deadline to have passed and
+// the minimum number of PAID entry units. If the deadline passes too early,
+// the tournament stays open and resolves as soon as the minimum is reached.
+// This browser-only implementation runs while the page is open and on reload.
+function resolveDueTournaments() {
+  let changed = false;
+  const now = Date.now();
+  for (const t of tournaments) {
+    if (t.winnerEntryId || !t.deadlineAt) continue; // no deadline means legacy/manual mode
+    const deadlineMs = new Date(t.deadlineAt).getTime();
+    if (!Number.isFinite(deadlineMs) || now < deadlineMs) continue;
+    const paidEligible = tournamentEntries(t.id).filter(e => e.paid === true && !!findPlayer(e.playerId));
+    const minimum = Math.max(1, Number(t.minEntries) || 1);
+    const totalUnits = paidEligible.reduce((sum, e) => sum + entryUnits(e), 0);
+    if (totalUnits < minimum) continue;
+    const winner = chooseWeightedEntry(paidEligible);
+    if (!winner) continue;
+    t.winnerEntryId = winner.id;
+    t.completedAt = new Date().toISOString();
+    t.winnerSelectionMethod = 'automatic-random-weighted';
+    changed = true;
+  }
+  if (changed) saveData();
+  return changed;
 }
 
 // ---------- DASHBOARD ----------
@@ -415,6 +611,7 @@ function renderDashboard() {
 // Re-render every screen from the saved data.
 // We call this after any change so the UI always matches the data.
 function renderAll() {
+  resolveDueTournaments();
   renderPlayers();
   renderTournaments();
   renderPodium();
@@ -422,6 +619,10 @@ function renderAll() {
 }
 
 renderAll(); // initial paint on page load
+setInterval(() => {
+  if (resolveDueTournaments()) { renderAll(); burstConfetti(); }
+  else { renderTournaments(); }
+}, 10_000);
 
 // Auto-resolve payments left pending in a previous session: if the original
 // transaction now verifies on-chain, markPaid fires automatically — the
