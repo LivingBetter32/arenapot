@@ -767,3 +767,123 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* mono scoreboard numeral for the combined split total */
 .combined-value { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+
+/* ---------------- Tournament winner declaration ---------------- */
+.badge.completed {
+  background: rgba(240, 180, 41, .16);
+  color: #ffd766;
+  border: 1px solid rgba(240, 180, 41, .35);
+}
+.t-card-winner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px 10px;
+  border: 1px solid rgba(240, 180, 41, .35);
+  background: rgba(240, 180, 41, .08);
+  color: #ffd766;
+  font-size: 12px;
+}
+.t-card-winner svg { flex: 0 0 auto; }
+.declare-winner-panel, .winner-panel {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid rgba(240, 180, 41, .32);
+  background: rgba(240, 180, 41, .055);
+  border-radius: 4px;
+}
+.declare-winner-panel h4 {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.declare-winner-panel p, .winner-meta {
+  color: var(--ink-soft);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.winner-select-label {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin: 12px 0 6px;
+}
+.winner-entry-select {
+  display: block;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #10151a;
+  color: var(--ink);
+  font: inherit;
+}
+.winner-entry-select:focus {
+  outline: 2px solid rgba(240, 180, 41, .25);
+  border-color: var(--violet);
+}
+.btn-declare-winner {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #f6c453, var(--violet));
+  color: #14181d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn-declare-winner:hover { filter: brightness(1.1); }
+.winner-empty { margin: 8px 0 0 !important; }
+.winner-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-color: rgba(52, 211, 153, .35);
+  background: rgba(52, 211, 153, .07);
+}
+.winner-panel-icon { padding-top: 3px; }
+.winner-panel-icon svg { width: 26px; height: 26px; }
+.winner-kicker {
+  color: #ffd766;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+.winner-name {
+  margin: 3px 0 5px;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 850;
+}
+.winner-meta { margin: 3px 0 0; }
+.winner-entry-row { background: rgba(240, 180, 41, .07); }
+
+
+/* Random winner draw */
+.winner-random-count {
+  margin: 12px 0;
+  color: var(--muted, #a1a1aa);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+
+/* Deadline, entry target, and multi-entry purchase additions */
+.t-card-deadline { margin-top: 8px; color: var(--muted, #9aa4af); font-size: 12px; line-height: 1.45; }
+.t-card-deadline.waiting-note { color: #f0b429; }
+.badge.waiting { background: rgba(240,180,41,.14); color: #f0b429; border: 1px solid rgba(240,180,41,.35); }
+.entry-units-note { margin-top: 3px; font-size: 11px; opacity: .72; }
+.lobby-player-label input.lobby-select { width: 100%; box-sizing: border-box; }
+#tournament-form input[type="datetime-local"] { min-width: 0; width: 100%; box-sizing: border-box; }
