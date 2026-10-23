@@ -33,7 +33,6 @@ ArenaPot/
 ├── index.html                  # App screens + payment modal
 ├── app.js                      # Tournament/entry logic + XLM payment module (browser)
 ├── style.css                   # Design system
-├── presentation.html           # 12-slide voice-driven demo deck (/presentation.html)
 ├── server.js                   # Node 22 server: Paiflow SDK, verify, recover
 ├── package.json                # ESM ("type": "module"), name "arenapot"
 ├── .env.example                # Copy to .env and fill in
@@ -82,9 +81,6 @@ Stop it with `Ctrl+C`.
    tx hash link.
 7. **(1:15)** Killer detail: click **Check payment** on a paying entry — recovery
    re-verifies the *original* transaction and never re-sends money.
-8. **(1:25)** Open `/presentation.html` — a 12-slide voice-driven deck (mic
-   commands: "next slide", "go to slide 5", "repeat that", or ask anything,
-   e.g. "what is a stroop?").
 
 ## Environment variables (`.env`)
 
