@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ArenaPot — Tournament buy-ins in XLM, split for the pot</title>
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -167,8 +167,14 @@
           <label>Title
             <input type="text" id="tournament-title" placeholder="e.g. Friday Frenzy" required>
           </label>
-          <label>Buy-in (XLM)
-            <input type="number" id="tournament-buyin" placeholder="10.00" min="0.0000001" step="0.01" required>
+          <label>Buy-in per entry (XLM)
+            <input type="number" id="tournament-buyin" placeholder="10" min="1" step="1" required>
+          </label>
+          <label>Deadline (local date and time)
+            <input type="datetime-local" id="tournament-deadline" required>
+          </label>
+          <label>Minimum paid entries to draw winner
+            <input type="number" id="tournament-min-entries" min="1" max="10000" step="1" value="5" required>
           </label>
         </div>
         <button type="submit" class="btn-primary">Create tournament</button>
@@ -285,6 +291,6 @@
   <script src="vendor/freighter-api.min.js"></script>
   <!-- Resilient connector: normalizes v5/v6/legacy bridge responses -->
   <script src="freighter-connector.js"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>
